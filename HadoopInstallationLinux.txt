@@ -1,0 +1,307 @@
+Hadoop Installation Linux
+Setting up a Single Node Hadoop Cluster
+
+***IMPORTANT NOTE*****
+These Steps should be done in one time otherwise there are chances of errors
+
+Prerequisites to install Hadoop on Linux
+3-5 GB internet with good speed
+
+Add a Hadoop system user
+
+Command : sudo addgroup hadoop_
+Command : sudo adduser --ingroup hadoop_ hduser_
+======================================================
+Enter your password, name and other details
+NOTE: There is a possibility of a error in this setup and installation process.
+"hduser is not in the sudoers file. This incident will be reported."
+
+This error can be resolved by Login as a root user
+Command : su admin
+Command : sudo adduser hduser_ sudo
+======================================================
+Re-login as hduser_
+Command : su hduser_
+======================================================
+Configure SSH
+First, switch user, enter the following command
+Command : su - hduser_
+Command : ssh-keygen -t rsa -P ""
+
+Enable SSH access to local machine using this key.
+
+Command : cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+
+Now test SSH setup by connecting to localhost as 'hduser' user.
+
+Command : ssh localhost
+======================================================
+Note: if you see error in response to 'ssh localhost', then there is a possibility that SSH is not available on this system-
+
+To resolve this -
+Purge SSH using,
+Command : sudo apt-get purge openssh-server
+
+Install SSH using the command-
+Command : sudo apt-get install openssh-server
+======================================================
+
+1. Install Java
+- Java JDK Link to download
+https://www.oracle.com/java/technologies/javase-jdk8-downloads.html
+- extract java tar file
+Command 1: tar -xvf jdk-8u101-linux-i586.tar.gz
+Command 2: javac -version
+
+or install java using terminal
+Command 1: sudo-apt update
+Command 2: sudo apt install openjdk-8-jdk openjdk-8-jre
+
+Verify 
+Command 3 : javac -version
+
+Setup JAVA_HOME and JRE_HOME
+Command 1 : sudo nano /etc/environment
+Command 2 : JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
+Command 3 : JRE_HOME="/usr/lib/jvm/java-8-openjdk-amd64/jre" and exit
+Command 4 : source nano /etc/environment
+Command 5 : echo $JAVA_HOME
+
+======================================================
+2. Download Hadoop
+Command: wget - https://archive.apache.org/dist/hadoop/core/stable/hadoop-3.3.0.tar.gz
+Extract hadoop
+Command : tar -xvf hadoop-3.3.0.tar.gz
+======================================================
+3. Add the Hadoop and Java paths in the bash file (.bashrc)
+Command:  sudo gedit ~/.bashrc
+
+(if connection refused then use )
+Command: sudo nano ~/.bashrc
+
+ENTER THIS IN BASHRC
+==================================================
+export HADOOP_HOME=/home/hduser_/hadoop
+export PATH=$PATH:/home/hduser_/hadoop/bin
+
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+export PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin:$PATH
+
+======================================================
+4. Save the bash file and close it
+For applying all these changes to the current Terminal, execute the source command.
+
+Command: source .bashrc
+Command: hadoop version
+======================================================
+4.5 rename hadoop-3.3.0 file to hadoop
+command: sudo mv hadoop-3.3.0 hadoop
+
+======================================================
+5. Configurations
+Command: cd hadoop/etc/hadoop/
+
+Open core-site.xml and edit the property
+Command: sudo gedit core-site.xml
+
+(if connection refused then use )
+Command: sudo nano core-site.xml
+
+paste the xml code in file and save
+
+<configuration>
+<property>
+<name>fs.defaultFS </name>
+<value>hdfs://localhost:9000</value>
+</property>
+</configuration>
+--------------------------------------------
+if got any error try this 
+
+<configuration>
+<property>
+<name>hadoop.tmp.dir</name>
+<value>/home/hduser_/hadoop/app/hadoop/tmp</value>
+<description>Parent directory for other temporary directories.</description>
+</property>
+
+<property>
+<name>fs.defaultFS </name>
+<value>hdfs://localhost:54310</value>
+<description>The name of the default file system. </description>
+</property>
+</configuration>
+======================================================
+
+Edit file hdfs-site.xml
+
+Command: sudo gedit hdfs-site.xml
+
+(if connection refused then use )
+Command: sudo nano ~/.bashrc
+
+paste xml code and save this file.
+
+<configuration>
+<property>
+<name>dfs.replication</name>
+<value>1</value>
+</property>
+<property>
+<name>dfs.permission</name>
+<value>false</value>
+</property>
+<property>
+<name>dfs.datanode.data.dir</name>
+<value>/home/hdusr_/hdfs</value>
+</property>
+</configuration>
+======================================================
+
+Edit the mapred-site.xml file and edit the property
+Command (for hadoop version 2 only): cp mapred-site.xml.template mapred-site.xml
+
+Command: sudo gedit mapred-site.xml
+
+(if connection refused then use )
+Command: sudo nano mapred-site.xml
+
+paste xml code and save this file.
+
+<configuration>
+<property>
+<name>yarn.app.mapreduce.am.env</name>
+  <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
+</property>
+<property>
+  <name>mapreduce.map.env</name>
+  <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
+</property>
+<property>
+  <name>mapreduce.reduce.env</name>
+  <value>HADOOP_MAPRED_HOME=$HADOOP_HOME</value>
+</property>
+</configuration>
+
+======================================================
+
+Edit file yarn-site.xml
+Command: sudo gedit yarn-site.xml
+
+(if connection refused then use )
+Command: sudo nano yarn-site.xml
+
+paste xml code and save this file.
+
+<configuration>
+   <property>
+    	<name>yarn.nodemanager.aux-services</name>
+    	<value>mapreduce_shuffle</value>
+   </property>
+   <property>
+	<name>yarn.nodemanager.auxservices.mapreduce.shuffle.class</name>  
+	<value>org.apache.hadoop.mapred.ShuffleHandler</value>
+   </property>
+</configuration>
+======================================================
+
+Edit hadoop-env.sh and add the Java Path
+Command: sudo gedit hadoop–env.sh
+(if connection refused then use )
+Command: sudo nano hadoop–env.sh
+
+export JAVA_HOME = /usr/lib/jvm/java-8-openjdk-amd64
+
+======================================================
+6. Go to Hadoop home directory and format the NameNode.
+Command: cd
+Command: cd hadoop
+Command: bin/hadoop namenode -format
+
+======================================================
+7. Testing
+Go to hadoop/sbin directory and start all the daemons
+Command: cd hadoop/sbin
+Command: ./start-all.sh
+The above command is a combination of start-dfs.sh, start-yarn.sh & mr-jobhistory-daemon.sh
+======================================================
+(Or you can start like this)
+- Start namenode
+Command: ./hadoop-daemon.sh start namenode
+- Start Datanode
+Command: ./hadoop-daemon.sh start datanode
+- Start ResourceManager
+Command: ./yarn-daemon.sh start resourcemanager
+- Start NodeManager
+Command: ./yarn-daemon.sh start nodemanager
+======================================================
+Start JobHistoryServer:
+JobHistoryServer is responsible for servicing all job history related requests from client.
+
+Command: ./mr-jobhistory-daemon.sh start historyserver
+======================================================
+8. To check that all the Hadoop services are up and running, run the below command.
+Command: jps
+
+Open: http://localhost:8088
+Open: http://localhost:9870
+Open: http://localhost:50070
+======================================================
+Hadoop installed Successfully............
+======================================================
+
+**** some ERROR Handling Commands ****
+
+1) if anywhere you need root permission 
+command : sudo su
+
+2) if you want to check the owner(both user and group) of the file/directory or what permissions do root have 
+command : ls -l <file/directory name>
+
+3) if you want to change the permissions of file/directory
+command : su <owner name>     .... no need if you are already owner
+command : chmod -R 777 <file/directory name>
+
+4) if you want to check users
+command: users
+
+5) if you want to check user groups
+command: groups
+
+6) if you want to change the ownership of file/directory
+command : su <owner name>     .... no need if you are already owner
+command: sudo chown -R <username>:<groupname> <filename>
+
+7) if hadoop namenode -format giving error "cannot write file" then make sure the path 
+in the core-site.xml file inside hadoop/etc/hadoop is starting with "/"
+
+
+8) to switch user:
+command : su <user_name>
+
+9) change directory to next directory
+command : cd <directory name>
+
+10) parent directory/previous directory 
+command : cd ..
+
+11)to see which directory you are in
+command : pwd
+
+12)to creat folder in hadoop distributed file system
+command : hdfs dfs -mkdir /user/hduser_/<folder-name>
+
+13)to upload file from local files to hadoop files system
+command : hdfs dfs -copyFromLocal <file-path> /user/hduser_/<folder-name>
+
+14)to read file from hadoop file system
+command : hdfs dfs -cat /user/hduser_/<folder-name>/<filename with extensions>
+
+15)to delete file from hadoop file system
+command : hdfs dfs -rm /user/hduser_/<folder-name>/<filename with extensions>
+
+16)to delete directory from hadoop file system
+command : hdfs dfs -rmdir /user/hduser_/<folder-name>
+
+17)to move file from one directory to other directory
+command : hdfs dfs -mv /user/hduser_/<folder-name>/<filename with extensions>  /user/hduser_/<folder-name>
